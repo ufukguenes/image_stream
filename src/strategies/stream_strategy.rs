@@ -11,5 +11,5 @@ pub trait StreamStrategy<T> {
         let step_capped = min(max(number_of_total_steps, 1), current_step);
         self.strategy(number_of_total_steps, step_capped)
     }
-    fn merge(&mut self, step: CompressionStep<T>);
+    fn merge(&mut self, step: CompressionStep<T>) ;
 }

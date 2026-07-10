@@ -1,9 +1,11 @@
+use std::cmp::min;
+
 use crate::strategies::stream_strategy::{CompressionStep, StreamStrategy};
 use image::{DynamicImage, GenericImage, GenericImageView, Pixel, Rgba};
 use rand::prelude::*;
 use rand::rngs::ChaCha8Rng;
 
-struct RandomStream {
+pub struct RandomStream {
     full_quality_image: DynamicImage,
     pub reconstructed_image: Option< DynamicImage>,
     seed: u64,
@@ -38,9 +40,12 @@ impl StreamStrategy<(u32, u32, Rgba<u8>)> for RandomStream {
         let mut pixel_idxs: Vec<usize> = (0..image_size).collect();
         pixel_idxs.shuffle(&mut rng);
 
-        let start_idx = pixel_per_step * current_step + self.min_num_pixel;
+        let start_idx = pixel_per_step * current_step;
+        let end_idx = min(image_size, pixel_per_step * (current_step +1) + self.min_num_pixel);
 
-        let data = &pixel_idxs[start_idx..start_idx + pixel_per_step];
+        println!("pixel_per_step {}, start_idx {}, end_idx {}", pixel_per_step, start_idx, end_idx);
+
+        let data = &pixel_idxs[start_idx..end_idx];
         
         let new_pixels: Vec<(u32, u32, Rgba<u8>)> = data
             .iter()
