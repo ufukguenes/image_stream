@@ -33,10 +33,10 @@ impl StreamStrategy<(u32, u32, Rgba<u8>)> for RandomStream {
         let mut pixel_idxs: Vec<usize> = (0..image_size).collect();
         pixel_idxs.shuffle(&mut rng);
 
-        let start_idx = pixel_per_step * current_step;
+        let start_idx = pixel_per_step * step_capped;
         let end_idx = min(
             image_size,
-            pixel_per_step * (current_step + 1) + stream.min_num_pixel,
+            pixel_per_step * (step_capped + 1) + stream.min_num_pixel,
         );
 
         println!(

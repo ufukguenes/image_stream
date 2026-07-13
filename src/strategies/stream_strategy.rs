@@ -1,5 +1,4 @@
 use image::DynamicImage;
-use std::cmp::{max, min};
 
 pub struct CompressionStep<T> {
     pub data: Vec<T>,
