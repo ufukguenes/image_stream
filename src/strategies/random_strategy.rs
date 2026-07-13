@@ -1,9 +1,11 @@
 use std::cmp::min;
-
-use crate::strategies::stream_strategy::{CompressionStep, Strategy};
 use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
 use rand::prelude::*;
 use rand::rngs::ChaCha8Rng;
+
+use crate::strategies::compression_step::CompressionStep;
+use crate::strategies::stream_strategy::Strategy;
+
 
 pub struct RandomStream {
     seed: u64,

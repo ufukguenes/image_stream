@@ -5,7 +5,8 @@ pub mod strategies;
 use image::ImageReader;
 use strategies::random_strategy::RandomStream;
 
-use crate::strategies::stream_strategy::{Server, Client};
+use crate::{client::Client, server::Server};
+
 fn main() {
     let img = ImageReader::open("example_images/osaka.jpeg")
         .unwrap()
@@ -23,7 +24,7 @@ fn main() {
     };
 
     let mut compression_step;
-    for i in 0..1 {
+    for i in 0..11 {
         compression_step = server.send_step(i);
         client.update_image( compression_step);
 
