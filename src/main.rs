@@ -5,26 +5,30 @@ pub mod strategies;
 use image::ImageReader;
 use strategies::random_strategy::RandomStream;
 
-use crate::strategies::stream_strategy::{StreamData, StreamStrategy};
+use crate::strategies::stream_strategy::{Server, Client};
 fn main() {
     let img = ImageReader::open("example_images/osaka.jpeg")
         .unwrap()
         .decode()
         .unwrap();
 
-    
-    let mut stream_data = StreamData::new(img, 1000, 10);
-    let stream = RandomStream::new(0);
+    let strategy = RandomStream::new(0, 10, 1000);
 
+    let mut client = Client::new(&strategy, img.width(), img.height());
 
-    let mut data_step;
-    for i in 0..11 {
-        data_step = stream.step(&stream_data, i);
-        stream.merge(&mut stream_data, data_step);
+    let mut server = Server {
+        full_quality_image: img,
+        compression_step_cache: Default::default(),
+        strategy: &strategy,
+    };
 
-        stream_data
+    let mut compression_step;
+    for i in 0..1 {
+        compression_step = server.send_step(i);
+        client.update_image( compression_step);
+
+        client
             .reconstructed_image.clone()
-            .unwrap()
             .save("example_images/test.jpeg")
             .unwrap()
     }

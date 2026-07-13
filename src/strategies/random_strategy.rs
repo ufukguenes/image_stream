@@ -1,42 +1,46 @@
-use std::cmp::{max, min};
+use std::cmp::min;
 
-use crate::strategies::stream_strategy::{CompressionStep, StreamStrategy, StreamData};
+use crate::strategies::stream_strategy::{CompressionStep, Strategy};
 use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
 use rand::prelude::*;
 use rand::rngs::ChaCha8Rng;
 
 pub struct RandomStream {
     seed: u64,
+    total_number_of_steps: usize,
+    min_num_pixel: usize,
 }
 
 impl RandomStream {
-    pub fn new(seed: u64) -> RandomStream {
-        RandomStream { seed }
+    pub fn new(seed: u64, total_number_of_steps: usize, min_num_pixel: usize) -> RandomStream {
+        RandomStream {
+            seed,
+            total_number_of_steps,
+            min_num_pixel,
+        }
     }
 }
 
-impl StreamStrategy<(u32, u32, Rgba<u8>)> for RandomStream {
+impl Strategy<Vec<(u32, u32, Rgba<u8>)>> for RandomStream {
     fn step(
         &self,
-        stream: &StreamData,
+        image: &DynamicImage,
         current_step: usize,
-    ) -> CompressionStep<(u32, u32, Rgba<u8>)> {
-        let step_capped = min(max(stream.number_of_total_steps, 1), current_step);
-
+    ) -> CompressionStep<Vec<(u32, u32, Rgba<u8>)>> {
         let mut rng: ChaCha8Rng = ChaCha8Rng::seed_from_u64(self.seed);
-        let width = stream.full_quality_image.width() as usize;
-        let height = stream.full_quality_image.height() as usize;
+        let width = image.width() as usize;
+        let height = image.height() as usize;
 
         let image_size = width * height;
-        let pixel_per_step = image_size / stream.number_of_total_steps;
+        let pixel_per_step = image_size / self.total_number_of_steps;
 
         let mut pixel_idxs: Vec<usize> = (0..image_size).collect();
         pixel_idxs.shuffle(&mut rng);
 
-        let start_idx = pixel_per_step * step_capped;
+        let start_idx = pixel_per_step * current_step;
         let end_idx = min(
             image_size,
-            pixel_per_step * (step_capped + 1) + stream.min_num_pixel,
+            pixel_per_step * (current_step + 1) + self.min_num_pixel,
         );
 
         println!(
@@ -51,7 +55,7 @@ impl StreamStrategy<(u32, u32, Rgba<u8>)> for RandomStream {
             .map(|flattened_pixel| {
                 let row = (flattened_pixel / width) as u32;
                 let col = (flattened_pixel % width) as u32;
-                let pix = stream.full_quality_image.get_pixel(col, row);
+                let pix = image.get_pixel(col, row);
                 (col, row, pix)
             })
             .collect();
@@ -59,24 +63,17 @@ impl StreamStrategy<(u32, u32, Rgba<u8>)> for RandomStream {
         CompressionStep { data: new_pixels }
     }
 
-    fn merge(&self, stream: &mut StreamData, step: CompressionStep<(u32, u32, Rgba<u8>)>) {
-        let width = stream.full_quality_image.width() as usize;
-        let height = stream.full_quality_image.height() as usize;
-
-        match &mut stream.reconstructed_image {
-            None => {
-                let mut img = DynamicImage::new_rgb8(width as u32, height as u32);
-
-                for (col, row, pixel) in step.data {
-                    img.put_pixel(col, row, pixel);
+    fn merge(
+        &self,
+        current_image: &mut DynamicImage,
+        compression_step: &CompressionStep<Vec<(u32, u32, Rgba<u8>)>>,
+    ) {
+        for (col, row, pixel) in &compression_step.data {
+                    current_image.put_pixel(*col, *row, *pixel);
                 }
-                stream.reconstructed_image = Some(img)
-            }
-            Some(img) => {
-                for (col, row, pixel) in step.data {
-                    img.put_pixel(col, row, pixel);
-                }
-            }
-        }
+    }
+
+    fn get_total_number_of_steps(&self) -> usize {
+        self.total_number_of_steps
     }
 }
