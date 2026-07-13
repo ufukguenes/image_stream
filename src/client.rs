@@ -1,5 +1,5 @@
-use std::marker::PhantomData;
 use image::DynamicImage;
+use std::marker::PhantomData;
 
 use crate::strategies::{compression_step::CompressionStep, stream_strategy::Strategy};
 

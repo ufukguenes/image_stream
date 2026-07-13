@@ -26,10 +26,11 @@ fn main() {
     let mut compression_step;
     for i in 0..11 {
         compression_step = server.send_step(i);
-        client.update_image( compression_step);
+        client.update_image(compression_step);
 
         client
-            .reconstructed_image.clone()
+            .reconstructed_image
+            .clone()
             .save("example_images/test.jpeg")
             .unwrap()
     }
