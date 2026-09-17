@@ -13,6 +13,9 @@ fn main() {
         .decode()
         .unwrap();
 
+    let compressed_bytes = std::fs::read("example_images/osaka.jpeg").unwrap();
+    println!("compressed size: {}", format_bytes(compressed_bytes.len()));
+
     let strategy = RandomStream::new(0, 10, 1000);
 
     let mut client = Client::new(&strategy, img.width(), img.height());
@@ -23,11 +26,12 @@ fn main() {
         strategy: &strategy,
     };
     
-    print(img.size)
     let mut compression_step;
+    let mut total_bytes_send = 0;
     for i in 0..11 {
         compression_step = server.send_step(i);
         let bytes_send = compression_step.current_size_in_bytes();
+        total_bytes_send += bytes_send;
         println!("bytes: {}", format_bytes(bytes_send));
         client.update_image(compression_step);
 
@@ -37,6 +41,8 @@ fn main() {
             .save("example_images/test.jpeg")
             .unwrap()
     }
+
+    println!("total bytes send {}", format_bytes(total_bytes_send))
 }
 
 
