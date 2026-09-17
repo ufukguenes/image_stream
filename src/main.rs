@@ -5,7 +5,7 @@ pub mod strategies;
 use image::ImageReader;
 use strategies::random_strategy::RandomStream;
 
-use crate::{client::Client, server::Server};
+use crate::{client::Client, server::Server, strategies::jpeg_stream::JpegStream};
 
 fn main() {
     let img = ImageReader::open("example_images/osaka.jpeg")
@@ -14,18 +14,19 @@ fn main() {
         .unwrap();
 
     let compressed_bytes = std::fs::read("example_images/osaka.jpeg").unwrap();
+    let jpeg_stream = JpegStream::new(0);
+    jpeg_stream.find_marker_index(&compressed_bytes, 0);
+
+    return;
+
     println!("compressed size: {}", format_bytes(compressed_bytes.len()));
 
     let strategy = RandomStream::new(0, 10, 1000);
 
     let mut client = Client::new(&strategy, img.width(), img.height());
 
-    let mut server = Server {
-        full_quality_image: img,
-        compression_step_cache: Default::default(),
-        strategy: &strategy,
-    };
-    
+    let mut server = Server::new(img, &strategy);
+
     let mut compression_step;
     let mut total_bytes_send = 0;
     for i in 0..11 {
@@ -44,7 +45,6 @@ fn main() {
 
     println!("total bytes send {}", format_bytes(total_bytes_send))
 }
-
 
 fn format_bytes(bytes: usize) -> String {
     const KB: f64 = 1024.0;

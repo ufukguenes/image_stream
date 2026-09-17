@@ -19,7 +19,9 @@ impl HeapSize for u32 {
 }
 
 impl HeapSize for image::Rgba<u8> {
-    fn heap_size_in_bytes(&self) -> usize { 0 }
+    fn heap_size_in_bytes(&self) -> usize {
+        0
+    }
 }
 
 impl<A: HeapSize, B: HeapSize, C: HeapSize> HeapSize for (A, B, C) {

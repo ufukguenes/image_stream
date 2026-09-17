@@ -1,11 +1,10 @@
-use std::cmp::min;
 use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
 use rand::prelude::*;
 use rand::rngs::ChaCha8Rng;
+use std::cmp::min;
 
 use crate::strategies::compression_step::CompressionStep;
 use crate::strategies::stream_strategy::Strategy;
-
 
 pub struct RandomStream {
     seed: u64,
@@ -23,7 +22,7 @@ impl RandomStream {
     }
 }
 
-impl Strategy<Vec<(u32, u32, Rgba<u8>)>> for RandomStream {
+impl Strategy<Vec<(u32, u32, Rgba<u8>)>, DynamicImage> for RandomStream {
     fn step(
         &self,
         image: &DynamicImage,
@@ -71,11 +70,19 @@ impl Strategy<Vec<(u32, u32, Rgba<u8>)>> for RandomStream {
         compression_step: &CompressionStep<Vec<(u32, u32, Rgba<u8>)>>,
     ) {
         for (col, row, pixel) in &compression_step.data {
-                    current_image.put_pixel(*col, *row, *pixel);
-                }
+            current_image.put_pixel(*col, *row, *pixel);
+        }
     }
 
     fn get_total_number_of_steps(&self) -> usize {
         self.total_number_of_steps
+    }
+
+    fn to_data(&self, image: &DynamicImage) -> DynamicImage {
+        image.clone()
+    }
+
+    fn to_image(&self, data: &DynamicImage) -> DynamicImage {
+        data.clone()
     }
 }
