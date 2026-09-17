@@ -8,5 +8,5 @@ pub trait Strategy<T, D> {
     fn get_total_number_of_steps(&self) -> usize;
     fn to_data(&self, image: &DynamicImage) -> D;
     fn to_image(&self, data: &D) -> DynamicImage;
-    fn generate_empty(&self, image_width_: u32, image_heith: u32) -> D;
+    fn generate_empty(&self, original_data: &D) -> D;
 }

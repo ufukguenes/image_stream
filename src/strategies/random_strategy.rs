@@ -86,7 +86,7 @@ impl Strategy<Vec<(u32, u32, Rgba<u8>)>, DynamicImage> for RandomStream {
         data.clone()
     }
 
-    fn generate_empty(&self, image_width: u32, image_height: u32) -> DynamicImage {
-        DynamicImage::new_rgb8(image_width, image_height)
+    fn generate_empty(&self, original_data: &DynamicImage) -> DynamicImage {
+        DynamicImage::new_rgb8(original_data.width(), original_data.height())
     }
 }

@@ -5,7 +5,11 @@ pub mod strategies;
 use image::ImageReader;
 use strategies::random_strategy::RandomStream;
 
-use crate::{client::Client, server::Server, strategies::jpeg_stream::JpegStream};
+use crate::{
+    client::Client,
+    server::Server,
+    strategies::{jpeg_stream::JpegStream, stream_strategy::Strategy},
+};
 
 fn main() {
     let img = ImageReader::open("example_images/osaka.jpeg")
@@ -17,11 +21,13 @@ fn main() {
     let jpeg_stream = JpegStream::new(0);
     jpeg_stream.find_marker_index(&compressed_bytes, 0);
 
+    //return;
     println!("compressed size: {}", format_bytes(compressed_bytes.len()));
 
     let strategy = RandomStream::new(0, 10, 1000);
 
-    let mut client = Client::new(&strategy, img.width(), img.height());
+    let empty = strategy.generate_empty(&img);
+    let mut client = Client::new(&strategy, empty);
 
     let mut server = Server::new(img, &strategy);
 
