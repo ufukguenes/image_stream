@@ -17,8 +17,6 @@ fn main() {
     let jpeg_stream = JpegStream::new(0);
     jpeg_stream.find_marker_index(&compressed_bytes, 0);
 
-    return;
-
     println!("compressed size: {}", format_bytes(compressed_bytes.len()));
 
     let strategy = RandomStream::new(0, 10, 1000);
@@ -37,7 +35,7 @@ fn main() {
         client.update_image(compression_step);
 
         client
-            .reconstructed_image
+            .get_current_image()
             .clone()
             .save("example_images/test.jpeg")
             .unwrap()

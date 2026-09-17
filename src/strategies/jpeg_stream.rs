@@ -45,6 +45,10 @@ impl Strategy<Vec<u8>, Vec<u8>> for JpegStream {
     fn to_image(&self, data: &Vec<u8>) -> image::DynamicImage {
         todo!()
     }
+
+    fn generate_empty(&self, image_width_: u32, image_heith: u32) -> Vec<u8> {
+        todo!()
+    }
 }
 
 impl JpegStream {
