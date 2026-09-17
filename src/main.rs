@@ -18,19 +18,30 @@ fn main() {
         .unwrap();
 
     let compressed_bytes = std::fs::read("example_images/osaka.jpeg").unwrap();
-    let jpeg_stream = JpegStream::new(0);
-    jpeg_stream.find_marker_index(&compressed_bytes, 0);
+    let strategy = JpegStream::new(0);
+    println!("{:?}", strategy.list_marker_idxs(&compressed_bytes));
+    strategy.find_marker_index(&compressed_bytes, (0, 0));
 
-    //return;
     println!("compressed size: {}", format_bytes(compressed_bytes.len()));
 
-    let strategy = RandomStream::new(0, 10, 1000);
+    let empty = strategy.generate_empty(&compressed_bytes);
+    println!(
+        "empty len {}, compressed len {}",
+        empty.len(),
+        compressed_bytes.len()
+    );
 
-    let empty = strategy.generate_empty(&img);
     let mut client = Client::new(&strategy, empty);
 
     let mut server = Server::new(img, &strategy);
 
+    client
+        .get_current_image()
+        .clone()
+        .save("example_images/test.jpeg")
+        .unwrap();
+
+    return;
     let mut compression_step;
     let mut total_bytes_send = 0;
     for i in 0..11 {
