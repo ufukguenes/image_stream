@@ -40,7 +40,7 @@ impl Strategy<(Vec<(usize, u8)>), Vec<u8>> for JpegStream {
         let mut data_idxs: Vec<usize> = (0..data_to_send.len()).collect();
         data_idxs.shuffle(&mut rng);
 
-        let start_idx = data_per_step * current_step;
+        let start_idx = data_per_step * current_step + min(current_step, 1) * self.min_num_data;
         let end_idx = min(
             data_to_send.len(),
             data_per_step * (current_step + 1) + self.min_num_data,

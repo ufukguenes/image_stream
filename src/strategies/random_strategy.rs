@@ -38,7 +38,7 @@ impl Strategy<Vec<(u32, u32, Rgba<u8>)>, DynamicImage> for RandomStream {
         let mut pixel_idxs: Vec<usize> = (0..image_size).collect();
         pixel_idxs.shuffle(&mut rng);
 
-        let start_idx = pixel_per_step * current_step;
+        let start_idx = pixel_per_step * current_step + min(current_step, 1) * self.min_num_pixel;
         let end_idx = min(
             image_size,
             pixel_per_step * (current_step + 1) + self.min_num_pixel,
