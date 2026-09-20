@@ -39,7 +39,7 @@ fn main() {
     let mut compression_step;
     let mut total_bytes_send = 0;
 
-    let mut idx_sent: HashSet<(usize)> = HashSet::default();
+    let mut idx_sent: HashSet<usize> = HashSet::default();
 
     for i in 0..10 {
         compression_step = server.send_step(i);
@@ -59,7 +59,7 @@ fn main() {
         }
 
         client.update_image(compression_step);
-        //thread::sleep(time::Duration::from_secs(3));
+        thread::sleep(time::Duration::from_secs(3));
 
         client
             .get_current_image()
