@@ -5,6 +5,9 @@ use rand::{SeedableRng, rngs::ChaCha8Rng, seq::SliceRandom};
 
 use crate::strategies::{compression_step::CompressionStep, stream_strategy::Strategy};
 
+//todo: send 0xFF 0xEn (application specific meta data) last
+
+//todo try sending all huffman table data after 0xFF 0xC4?
 pub struct JpegStream {
     total_number_of_steps: usize,
     markers: HashSet<(u8, u8)>,
@@ -26,6 +29,7 @@ impl JpegStream {
 
 impl Strategy<(Vec<(usize, u8)>), Vec<u8>> for JpegStream {
     fn step(&self, data: &Vec<u8>, current_step: usize) -> CompressionStep<Vec<(usize, u8)>> {
+        println!("step");
         let mut rng: ChaCha8Rng = ChaCha8Rng::seed_from_u64(self.seed);
 
         let until_entropy = Self::get_index_until_entropy(data).unwrap();
@@ -49,6 +53,7 @@ impl Strategy<(Vec<(usize, u8)>), Vec<u8>> for JpegStream {
 
         let data = &data_idxs[start_idx..end_idx];
 
+        // todo this sends double the data, as the idx is send as well
         let new_data: Vec<(usize, u8)> =
             data.iter().map(|idx| (*idx, data_to_send[*idx])).collect();
 
@@ -156,6 +161,7 @@ impl JpegStream {
 
     pub fn find_marker_index(&self, byte_stream: &[u8], marker: (u8, u8)) -> bool {
         let mut segment_length = 0_usize;
+        let mut previous_segment_idx = 0_usize;
         for i in 1..byte_stream.len() {
             let byte_pair = (byte_stream[i - 1], byte_stream[i]);
             let contains = self.markers.contains(&byte_pair);
@@ -170,8 +176,9 @@ impl JpegStream {
                     byte_pair.1,
                     next,
                     next_2,
-                    segment_length
+                    segment_length - previous_segment_idx
                 );
+                previous_segment_idx = i + 1;
             }
             segment_length += 1;
 

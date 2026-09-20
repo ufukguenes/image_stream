@@ -2,14 +2,13 @@ mod client;
 mod server;
 pub mod strategies;
 
-use image::ImageReader;
-use strategies::random_strategy::RandomStream;
-
 use crate::{
     client::Client,
     server::Server,
     strategies::{jpeg_stream::JpegStream, stream_strategy::Strategy},
 };
+use image::ImageReader;
+use strategies::random_strategy::RandomStream;
 
 fn main() {
     let img = ImageReader::open("example_images/osaka.jpeg")
@@ -28,7 +27,7 @@ fn main() {
 
     let mut client = Client::new(&strategy, empty);
 
-    let mut server = Server::new(img, &strategy);
+    let mut server = Server::new(compressed_bytes.clone(), &strategy);
 
     client
         .get_current_image()
