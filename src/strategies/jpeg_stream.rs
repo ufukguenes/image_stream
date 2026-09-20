@@ -132,7 +132,7 @@ impl JpegStream {
         markers.insert((0xFF, 0xC0));
         markers.insert((0xFF, 0xC2));
         markers.insert((0xFF, 0xC4));
-        markers.insert((0xFF, 0xD8));
+        markers.insert((0xFF, 0xDB));
         markers.insert((0xFF, 0xDD));
         markers.insert((0xFF, 0xDA));
 
