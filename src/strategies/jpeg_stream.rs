@@ -7,7 +7,7 @@ use crate::strategies::{compression_step::CompressionStep, stream_strategy::Stra
 
 //todo: send 0xFF 0xEn (application specific meta data) last
 
-//todo try sending all huffman table data after 0xFF 0xC4?
+//todo check format off huffman tables and then send data accordingly
 pub struct JpegStream {
     total_number_of_steps: usize,
     markers: HashSet<(u8, u8)>,
@@ -171,7 +171,7 @@ impl JpegStream {
                 let next = byte_stream.get(i + 1).unwrap_or(&0);
                 let next_2 = byte_stream.get(i + 2).unwrap_or(&0);
                 println!(
-                    "marker found at index: {}, {} - hex: {:x}{:x} - next bytes: {:x}, {:x}, length of previous segment {}",
+                    "marker found at index: {}, {} - hex: {:x}{:x} - next bytes: {}, {}, length of previous segment {}",
                     i - 1,
                     i,
                     byte_pair.0,
