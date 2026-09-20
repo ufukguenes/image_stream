@@ -54,8 +54,10 @@ impl Strategy<(Vec<(usize, u8)>), Vec<u8>> for JpegStream {
         let data = &data_idxs[start_idx..end_idx];
 
         // todo this sends double the data, as the idx is send as well
-        let new_data: Vec<(usize, u8)> =
-            data.iter().map(|idx| (*idx, data_to_send[*idx])).collect();
+        let new_data: Vec<(usize, u8)> = data
+            .iter()
+            .map(|idx| (*idx + until_entropy + 1, data_to_send[*idx]))
+            .collect();
 
         CompressionStep { data: new_data }
     }
