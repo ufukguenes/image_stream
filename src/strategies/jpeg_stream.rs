@@ -7,7 +7,7 @@ use crate::strategies::{compression_step::CompressionStep, stream_strategy::Stra
 
 //todo: send 0xFF 0xEn (application specific meta data) last
 
-//todo check format off huffman tables and then send data accordingly
+//todo check format off huffman tables and then send data accordingly (instead of top to bottom, check the prefixes and chunk by random codes (with separate prefixes) )
 
 pub struct JpegStream {
     total_number_of_steps: usize,
