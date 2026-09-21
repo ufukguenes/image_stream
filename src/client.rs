@@ -21,9 +21,10 @@ impl<'a, S: Strategy<T, D>, T, D> Client<'a, S, T, D> {
     }
 
     pub fn update_image(&mut self, compression_step: &CompressionStep<T>) {
-        // todo does this if actually ever evaluate to false?
         if self.current_step < self.strategy.get_total_number_of_steps() {
-            self.strategy.merge(&mut self.data, compression_step);
+            self.strategy
+                .merge(&mut self.data, compression_step, self.current_step);
+            self.current_step += 1;
         }
     }
 

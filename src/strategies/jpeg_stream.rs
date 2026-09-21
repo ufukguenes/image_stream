@@ -8,6 +8,7 @@ use crate::strategies::{compression_step::CompressionStep, stream_strategy::Stra
 //todo: send 0xFF 0xEn (application specific meta data) last
 
 //todo check format off huffman tables and then send data accordingly
+
 pub struct JpegStream {
     total_number_of_steps: usize,
     markers: HashSet<(u8, u8)>,
@@ -27,36 +28,18 @@ impl JpegStream {
     }
 }
 
-impl Strategy<(Vec<(usize, u8)>), Vec<u8>> for JpegStream {
-    fn step(&self, data: &Vec<u8>, current_step: usize) -> CompressionStep<Vec<(usize, u8)>> {
+impl Strategy<Vec<u8>, Vec<u8>> for JpegStream {
+    fn step(&self, data: &Vec<u8>, current_step: usize) -> CompressionStep<Vec<u8>> {
         println!("step");
-        let mut rng: ChaCha8Rng = ChaCha8Rng::seed_from_u64(self.seed);
 
-        let until_entropy = Self::get_index_until_entropy(data).unwrap();
-        let data_to_send = &data[until_entropy + 1..];
+        let (data_idxs, until_entropy, start_idx, end_idx) =
+            self.get_data_idx_offset_start_end_idx_for_step(data, current_step);
 
-        let data_per_step = data_to_send.len() / self.total_number_of_steps;
-
-        let mut data_idxs: Vec<usize> = (0..data_to_send.len()).collect();
-        data_idxs.shuffle(&mut rng);
-
-        let start_idx = data_per_step * current_step + min(current_step, 1) * self.min_num_data;
-        let end_idx = min(
-            data_to_send.len(),
-            data_per_step * (current_step + 1) + self.min_num_data,
-        );
-
-        println!(
-            "data_per_step {}, start_idx {}, end_idx {}",
-            data_per_step, start_idx, end_idx
-        );
-
-        let data = &data_idxs[start_idx..end_idx];
-
-        // todo this sends double the data, as the idx is send as well
-        let new_data: Vec<(usize, u8)> = data
-            .iter()
-            .map(|idx| (*idx + until_entropy + 1, data_to_send[*idx]))
+        let new_data: Vec<u8> = (start_idx..end_idx)
+            .map(|idx| {
+                let new_idx = until_entropy + 1 + data_idxs[idx];
+                data[new_idx]
+            })
             .collect();
 
         CompressionStep { data: new_data }
@@ -65,10 +48,16 @@ impl Strategy<(Vec<(usize, u8)>), Vec<u8>> for JpegStream {
     fn merge(
         &self,
         current_data: &mut Vec<u8>,
-        compression_step: &CompressionStep<Vec<(usize, u8)>>,
+        compression_step: &CompressionStep<Vec<u8>>,
+        current_step: usize,
     ) {
-        for (idx, data) in &compression_step.data {
-            current_data[*idx] = *data;
+        let (data_idxs, until_entropy, start_idx, _) =
+            self.get_data_idx_offset_start_end_idx_for_step(current_data, current_step);
+
+        println!("{}, {}", until_entropy + 1 + start_idx, data_idxs.len());
+        for (idx, data) in compression_step.data.iter().enumerate() {
+            let current_idx = until_entropy + 1 + data_idxs[start_idx + idx];
+            current_data[current_idx] = *data;
         }
     }
 
@@ -108,6 +97,35 @@ impl Strategy<(Vec<(usize, u8)>), Vec<u8>> for JpegStream {
 }
 
 impl JpegStream {
+    pub fn get_data_idx_offset_start_end_idx_for_step(
+        &self,
+        data: &Vec<u8>,
+        current_step: usize,
+    ) -> (Vec<usize>, usize, usize, usize) {
+        let mut rng: ChaCha8Rng = ChaCha8Rng::seed_from_u64(self.seed);
+
+        let until_entropy = Self::get_index_until_entropy(data).unwrap();
+        let data_to_send = &data[until_entropy + 1..];
+
+        let data_per_step = data_to_send.len() / self.total_number_of_steps;
+
+        let mut data_idxs: Vec<usize> = (0..data_to_send.len()).collect();
+        //data_idxs.shuffle(&mut rng);
+
+        let start_idx = data_per_step * current_step + min(current_step, 1) * self.min_num_data;
+        let end_idx = min(
+            data_to_send.len(),
+            data_per_step * (current_step + 1) + self.min_num_data,
+        );
+
+        println!(
+            "data_per_step {}, start_idx {}, end_idx {}",
+            data_per_step, start_idx, end_idx
+        );
+
+        (data_idxs, until_entropy, start_idx, end_idx)
+    }
+
     pub fn get_index_until_entropy(byte_stream: &[u8]) -> Option<usize> {
         let sos_idx = Self::find_sos_marker_index(byte_stream).unwrap();
 

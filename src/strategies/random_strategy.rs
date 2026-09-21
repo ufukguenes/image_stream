@@ -2,6 +2,7 @@ use image::{DynamicImage, GenericImage, GenericImageView, Rgba};
 use rand::prelude::*;
 use rand::rngs::ChaCha8Rng;
 use std::cmp::min;
+use std::usize;
 
 use crate::strategies::compression_step::CompressionStep;
 use crate::strategies::stream_strategy::Strategy;
@@ -22,12 +23,64 @@ impl RandomStream {
     }
 }
 
-impl Strategy<Vec<(u32, u32, Rgba<u8>)>, DynamicImage> for RandomStream {
-    fn step(
+impl Strategy<Vec<Rgba<u8>>, DynamicImage> for RandomStream {
+    fn step(&self, image: &DynamicImage, current_step: usize) -> CompressionStep<Vec<Rgba<u8>>> {
+        let (pixel_idxs, start_idx, end_idx) =
+            self.get_pixel_idx_start_end_idx_for_step(image, current_step);
+        let data = &pixel_idxs[start_idx..end_idx];
+
+        let new_pixels: Vec<Rgba<u8>> = data
+            .iter()
+            .map(|flattened_pixel| {
+                let row = *flattened_pixel as u32 / image.width();
+                let col = *flattened_pixel as u32 % image.width();
+                image.get_pixel(col, row)
+            })
+            .collect();
+
+        CompressionStep { data: new_pixels }
+    }
+
+    fn merge(
+        &self,
+        current_image: &mut DynamicImage,
+        compression_step: &CompressionStep<Vec<Rgba<u8>>>,
+        current_step: usize,
+    ) {
+        let (pixel_idxs, start_idx, _) =
+            self.get_pixel_idx_start_end_idx_for_step(current_image, current_step);
+
+        for (i, pix) in compression_step.data.iter().enumerate() {
+            let flattened_pixel = pixel_idxs[start_idx + i];
+            let row = flattened_pixel as u32 / current_image.width();
+            let col = flattened_pixel as u32 % current_image.width();
+            current_image.put_pixel(col, row, *pix);
+        }
+    }
+
+    fn get_total_number_of_steps(&self) -> usize {
+        self.total_number_of_steps
+    }
+
+    fn to_data(&self, image: &DynamicImage) -> DynamicImage {
+        image.clone()
+    }
+
+    fn to_image(&self, data: &DynamicImage) -> DynamicImage {
+        data.clone()
+    }
+
+    fn generate_empty(&self, original_data: &DynamicImage) -> DynamicImage {
+        DynamicImage::new_rgb8(original_data.width(), original_data.height())
+    }
+}
+
+impl RandomStream {
+    fn get_pixel_idx_start_end_idx_for_step(
         &self,
         image: &DynamicImage,
         current_step: usize,
-    ) -> CompressionStep<Vec<(u32, u32, Rgba<u8>)>> {
+    ) -> (Vec<usize>, usize, usize) {
         let mut rng: ChaCha8Rng = ChaCha8Rng::seed_from_u64(self.seed);
         let width = image.width() as usize;
         let height = image.height() as usize;
@@ -49,44 +102,6 @@ impl Strategy<Vec<(u32, u32, Rgba<u8>)>, DynamicImage> for RandomStream {
             pixel_per_step, start_idx, end_idx
         );
 
-        let data = &pixel_idxs[start_idx..end_idx];
-
-        let new_pixels: Vec<(u32, u32, Rgba<u8>)> = data
-            .iter()
-            .map(|flattened_pixel| {
-                let row = (flattened_pixel / width) as u32;
-                let col = (flattened_pixel % width) as u32;
-                let pix = image.get_pixel(col, row);
-                (col, row, pix)
-            })
-            .collect();
-
-        CompressionStep { data: new_pixels }
-    }
-
-    fn merge(
-        &self,
-        current_image: &mut DynamicImage,
-        compression_step: &CompressionStep<Vec<(u32, u32, Rgba<u8>)>>,
-    ) {
-        for (col, row, pixel) in &compression_step.data {
-            current_image.put_pixel(*col, *row, *pixel);
-        }
-    }
-
-    fn get_total_number_of_steps(&self) -> usize {
-        self.total_number_of_steps
-    }
-
-    fn to_data(&self, image: &DynamicImage) -> DynamicImage {
-        image.clone()
-    }
-
-    fn to_image(&self, data: &DynamicImage) -> DynamicImage {
-        data.clone()
-    }
-
-    fn generate_empty(&self, original_data: &DynamicImage) -> DynamicImage {
-        DynamicImage::new_rgb8(original_data.width(), original_data.height())
+        (pixel_idxs, start_idx, end_idx)
     }
 }
