@@ -44,7 +44,7 @@ fn main() {
         println!("bytes: {}", format_bytes(bytes_send));
 
         client.update_image(compression_step);
-        thread::sleep(time::Duration::from_secs(1));
+        thread::sleep(time::Duration::from_millis(50));
 
         client
             .get_current_image()
