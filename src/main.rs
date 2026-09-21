@@ -19,8 +19,6 @@ fn main() {
 
     let compressed_bytes = std::fs::read("example_images/osaka.jpeg").unwrap();
     let strategy = JpegStream::new(0, 10, 10);
-    println!("{:?}", strategy.list_marker_idxs(&compressed_bytes));
-    strategy.find_marker_index(&compressed_bytes, (0, 0));
 
     println!("compressed size: {}", format_bytes(compressed_bytes.len()));
 
@@ -39,27 +37,14 @@ fn main() {
     let mut compression_step;
     let mut total_bytes_send = 0;
 
-    let mut idx_sent: HashSet<usize> = HashSet::default();
-
     for i in 0..10 {
         compression_step = server.send_step(i);
         let bytes_send = compression_step.current_size_in_bytes();
         total_bytes_send += bytes_send;
         println!("bytes: {}", format_bytes(bytes_send));
 
-        let mut twice_counter = 0;
-        for (idx, _) in compression_step.data.iter() {
-            let res = idx_sent.insert(*idx);
-            if !res {
-                twice_counter += 1;
-            }
-        }
-        if twice_counter > 0 {
-            println!("{} values were sent twice", twice_counter);
-        }
-
         client.update_image(compression_step);
-        thread::sleep(time::Duration::from_secs(3));
+        thread::sleep(time::Duration::from_secs(1));
 
         client
             .get_current_image()
